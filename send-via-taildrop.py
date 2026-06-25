@@ -146,7 +146,12 @@ class TaildropSenderWindow(Adw.ApplicationWindow):
                 min-height: 76px;
             }
             .device-btn image {
-                color: @accent_color;
+                color: @theme_fg_color;
+                opacity: 0.76;
+            }
+            .self-avatar {
+                background-color: transparent;
+                background-image: none;
             }
             .caption {
                 font-weight: 500;
@@ -185,6 +190,7 @@ class TaildropSenderWindow(Adw.ApplicationWindow):
         header_box.set_valign(Gtk.Align.CENTER)
 
         avatar = Adw.Avatar(size=40, text="me", show_initials=False)
+        avatar.add_css_class("self-avatar")
         avatar.set_icon_name("computer-symbolic")
         avatar.set_valign(Gtk.Align.CENTER)
         avatar.set_margin_start(0)
@@ -198,7 +204,7 @@ class TaildropSenderWindow(Adw.ApplicationWindow):
         title_label = Gtk.Label(label="Taildrop")
         title_label.add_css_class("title-label")
         title_label.set_xalign(0)
-        self.subtitle_label = Gtk.Label(label="As …")
+        self.subtitle_label = Gtk.Label(label="")
         self.subtitle_label.add_css_class("subtitle-label")
         self.subtitle_label.add_css_class("dim-label")
         self.subtitle_label.set_xalign(0)
@@ -318,7 +324,7 @@ class TaildropSenderWindow(Adw.ApplicationWindow):
 
     def update_ui_with_peers(self, peers, self_name):
         if self_name:
-            self.subtitle_label.set_label(f"As {self_name}")
+            self.subtitle_label.set_label(f"{self_name}")
 
         if peers == self._last_peers:
             return

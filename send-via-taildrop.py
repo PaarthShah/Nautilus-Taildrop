@@ -24,7 +24,7 @@ DEVICE_ICONS = {
 
 
 class DeviceButton(Gtk.Box):
-    def __init__(self, name, os_name, callback):
+    def __init__(self, name, os_name, callback, online=True):
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         self.set_halign(Gtk.Align.CENTER)
         self.set_valign(Gtk.Align.CENTER)
@@ -33,6 +33,7 @@ class DeviceButton(Gtk.Box):
         self._anim_id = None
         self._angle = 0.0
         self._loading = False
+        self.online = online
 
         # Overlay: ring drawn around the button
         overlay = Gtk.Overlay()
@@ -50,7 +51,10 @@ class DeviceButton(Gtk.Box):
         icon = Gtk.Image.new_from_icon_name(DEVICE_ICONS.get(os_name, "computer-symbolic"))
         icon.set_pixel_size(32)
         self.btn.set_child(icon)
-        self.btn.connect("clicked", lambda _: callback(name))
+        # set click handler and initial online state
+        if online:
+            self.btn.connect("clicked", lambda _: callback(name))
+        self.set_online(online)
         overlay.set_child(self.btn)
 
         # DrawingArea for the spinning arc ring — pointer-transparent
@@ -124,6 +128,27 @@ class DeviceButton(Gtk.Box):
             self._anim_id = None
         self.da.queue_draw()
 
+    def set_online(self, online: bool):
+        """Update visual/interactive state for online/offline devices without
+        recreating the widget."""
+        self.online = bool(online)
+        try:
+            if self.online:
+                self.btn.set_sensitive(True)
+                # ensure offline class removed
+                try:
+                    self.btn.remove_css_class("offline")
+                except Exception:
+                    pass
+            else:
+                self.btn.set_sensitive(False)
+                try:
+                    self.btn.add_css_class("offline")
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
 
 class TaildropSenderWindow(Adw.ApplicationWindow):
     def __init__(self, app, files):
@@ -148,6 +173,13 @@ class TaildropSenderWindow(Adw.ApplicationWindow):
             .device-btn image {
                 color: @accent_color;
                 opacity: 0.92;
+            }
+            .device-btn.offline {
+                opacity: 0.6;
+            }
+            .device-btn.offline image {
+                color: @theme_fg_color;
+                opacity: 0.48;
             }
             .caption {
                 font-weight: 500;
@@ -207,20 +239,27 @@ class TaildropSenderWindow(Adw.ApplicationWindow):
         # Device grid
         self.flow = Gtk.FlowBox()
         self.flow.set_valign(Gtk.Align.START)
-        self.flow.set_halign(Gtk.Align.START)
-        self.flow.set_max_children_per_line(4)
-        self.flow.set_min_children_per_line(2)
+        self.flow.set_halign(Gtk.Align.CENTER)
+        # Show at most 3 devices per row so additional devices wrap to the next line
+        self.flow.set_max_children_per_line(3)
+        self.flow.set_min_children_per_line(3)
         self.flow.set_selection_mode(Gtk.SelectionMode.NONE)
         self.flow.set_row_spacing(8)
         self.flow.set_column_spacing(8)
         self.flow.set_margin_top(16)
         self.flow.set_margin_bottom(16)
-        self.flow.set_margin_start(16)
-        self.flow.set_margin_end(16)
+        # Remove horizontal margins here and apply them to the scrolled window
+        # so the visible content lines up with header/footer margins.
+        self.flow.set_margin_start(0)
+        self.flow.set_margin_end(0)
 
         scrolled = Gtk.ScrolledWindow()
+        # Apply the same outer horizontal margins to the scrolled window so
+        # content aligns with header/footer.
+        scrolled.set_margin_start(16)
+        scrolled.set_margin_end(16)
         scrolled.set_vexpand(False)
-        scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.NEVER)
+        scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         scrolled.set_propagate_natural_height(True)
         scrolled.set_child(self.flow)
         root.append(scrolled)
@@ -291,22 +330,29 @@ class TaildropSenderWindow(Adw.ApplicationWindow):
                 capture_output=True, text=True, timeout=5,
             )
             data = json.loads(res.stdout)
+            # Use device display names where available and include offline peers.
             self_name = data.get("Self", {}).get("HostName", "").lower()
             peers = []
+            self_ips = set(data.get("Self", {}).get("TailscaleIPs", []))
             for peer in data.get("Peer", {}).values():
-                if not peer.get("Online", False):
-                    continue
-                raw = peer.get("HostName", peer.get("DNSName", "Unknown"))
-                name = raw.split(".")[0]
-                if name.lower() in (self_name, "localhost", "", "127"):
-                    continue
-                # Also skip if this peer's IPs include the machine's own addresses
+                # Prefer explicit display/name fields from Tailscale JSON
+                # Prefer explicit Tailscale name/display if present. Many peers
+                # only expose HostName and DNSName; prefer the DNS short label
+                # (e.g. "ipad-pro" from "ipad-pro.tail4ed4a8.ts.net.") when available
+                name_field = peer.get("Name") or peer.get("DisplayName")
+                user_field = (peer.get("User") or {}).get("DisplayName") or (peer.get("User") or {}).get("LoginName")
+                dns = peer.get("DNSName") or ""
+                dns_label = dns.rstrip('.').split('.')[0] if dns else None
+                host = peer.get("HostName")
+                display = name_field or user_field or dns_label or host or "Unknown"
+                # Do not split on dots — show the user-facing device name
+                # Skip adding the local device by comparing Tailscale IPs
                 peer_ips = peer.get("TailscaleIPs", [])
-                self_ips = set(data.get("Self", {}).get("TailscaleIPs", []))
                 if self_ips & set(peer_ips):
                     continue
                 os_name = peer.get("OS", "").lower()
-                peers.append((name, os_name))
+                online = bool(peer.get("Online", False))
+                peers.append((display, os_name, online))
             GLib.idle_add(self.update_ui_with_peers, peers, self_name)
         except Exception:
             pass
@@ -314,27 +360,66 @@ class TaildropSenderWindow(Adw.ApplicationWindow):
     def update_ui_with_peers(self, peers, self_name):
         if self_name:
             self.subtitle_label.set_label(f"{self_name}")
-
-        if peers == self._last_peers:
+        # Build mapping of new peers and sort so online devices are preferred in
+        # the resulting list. We'll reuse existing DeviceButton widgets where
+        # possible to avoid recreating widgets (which causes hover flicker).
+        new_map = {}
+        for entry in peers:
+            if len(entry) == 3:
+                name, os_name, online = entry
+            else:
+                name, os_name = entry
+                online = True
+            new_map[name] = (os_name, bool(online))
+        # If there are no peers at all, remove any existing widgets and
+        # show a clearer message.
+        if not new_map:
+            for name in list(self.device_buttons.keys()):
+                w = self.device_buttons.pop(name, None)
+                if w:
+                    try:
+                        self.flow.remove(w)
+                    except Exception:
+                        pass
+            self.status_label.set_label("No devices found.")
             return
-        self._last_peers = peers
 
-        while self.flow.get_child_at_index(0):
-            self.flow.remove(self.flow.get_child_at_index(0))
+        # Sort names: online first, then alphabetically
+        try:
+            sorted_names = sorted(new_map.items(), key=lambda kv: (0 if kv[1][1] else 1, kv[0].lower()))
+            sorted_names = [n for n, _ in sorted_names]
+        except Exception:
+            sorted_names = list(new_map.keys())
 
-        self.device_buttons = {}
+        # Add or update widgets for peers in sorted order; do not remove or
+        # recreate widgets unnecessarily so hover states remain.
+        existing = set(self.device_buttons.keys())
+        for name in sorted_names:
+            os_name, online = new_map[name]
+            if name in self.device_buttons:
+                btn = self.device_buttons[name]
+                # update online state without recreating
+                btn.set_online(online)
+            else:
+                btn = DeviceButton(name, os_name, self.on_device_selected, online)
+                self.flow.append(btn)
+                self.device_buttons[name] = btn
 
-        if not peers:
+        # Remove widgets for peers that no longer exist
+        for name in list(existing - set(new_map.keys())):
+            w = self.device_buttons.pop(name, None)
+            if w:
+                try:
+                    self.flow.remove(w)
+                except Exception:
+                    pass
+
+        # Show only the number of online devices in the status label
+        online_count = sum(1 for _, v in new_map.items() if v[1])
+        if online_count == 0:
             self.status_label.set_label("No online devices found.")
-            return
-
-        for name, os_name in peers:
-            btn = DeviceButton(name, os_name, self.on_device_selected)
-            self.flow.append(btn)
-            self.device_buttons[name] = btn
-
-        n = len(peers)
-        self.status_label.set_label(f"{n} device{'s' if n != 1 else ''} available")
+        else:
+            self.status_label.set_label(f"{online_count} device{'s' if online_count != 1 else ''} online")
 
     def on_device_selected(self, device_name):
         self.stop_auto_refresh()

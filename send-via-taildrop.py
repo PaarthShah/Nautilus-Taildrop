@@ -146,12 +146,8 @@ class TaildropSenderWindow(Adw.ApplicationWindow):
                 min-height: 76px;
             }
             .device-btn image {
-                color: @theme_fg_color;
-                opacity: 0.76;
-            }
-            .self-avatar {
-                background-color: transparent;
-                background-image: none;
+                color: @accent_color;
+                opacity: 0.92;
             }
             .caption {
                 font-weight: 500;
@@ -189,14 +185,7 @@ class TaildropSenderWindow(Adw.ApplicationWindow):
         header_box.set_margin_bottom(16)
         header_box.set_valign(Gtk.Align.CENTER)
 
-        avatar = Adw.Avatar(size=40, text="me", show_initials=False)
-        avatar.add_css_class("self-avatar")
-        avatar.set_icon_name("computer-symbolic")
-        avatar.set_valign(Gtk.Align.CENTER)
-        avatar.set_margin_start(0)
-        avatar.set_margin_top(0)
-        avatar.set_margin_bottom(0)
-        header_box.append(avatar)
+        # avatar removed — header shows title and subtitle only
 
         text_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
         text_box.set_valign(Gtk.Align.CENTER)
@@ -284,8 +273,8 @@ class TaildropSenderWindow(Adw.ApplicationWindow):
             self.refresh_timeout_id = None
 
     def auto_refresh(self):
-        if self.flow.get_sensitive():
-            self.load_devices_silent()
+        # Always poll for devices while the window is open (stops when stop_auto_refresh is called)
+        self.load_devices_silent()
         return True
 
     def load_devices(self):

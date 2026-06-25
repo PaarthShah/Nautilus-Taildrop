@@ -5,7 +5,6 @@ import subprocess
 import threading
 import json
 import gi
-import math
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
@@ -51,9 +50,8 @@ class DeviceButton(Gtk.Box):
         icon = Gtk.Image.new_from_icon_name(DEVICE_ICONS.get(os_name, "computer-symbolic"))
         icon.set_pixel_size(32)
         self.btn.set_child(icon)
-        # set click handler and initial online state
-        if online:
-            self.btn.connect("clicked", lambda _: callback(name))
+        # always connect the click handler; the button is disabled when offline
+        self.btn.connect("clicked", lambda _: callback(name))
         self.set_online(online)
         overlay.set_child(self.btn)
 
@@ -204,10 +202,6 @@ class TaildropSenderWindow(Adw.ApplicationWindow):
 
         root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.set_content(root)
-
-        # HeaderBar
-        header = Adw.HeaderBar()
-        
 
         # Profile row — avatar + text on same line
         header_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)

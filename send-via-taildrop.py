@@ -5,6 +5,7 @@ import subprocess
 import threading
 import json
 import gi
+import math
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
@@ -141,7 +142,7 @@ class TaildropSenderWindow(Adw.ApplicationWindow):
                 font-size: 10pt;
             }
             .device-btn {
-                min-width: 76px
+                min-width: 76px;
                 min-height: 76px;
             }
             .device-btn image {
@@ -320,17 +321,10 @@ class TaildropSenderWindow(Adw.ApplicationWindow):
         n = len(peers)
         self.status_label.set_label(f"{n} device{'s' if n != 1 else ''} available")
 
-        # Resize window to fit all devices without scrolling
-        cols = min(n, 4)
-        rows = math.ceil(n / cols)
-        # Flow content: device buttons 96w/120h, 8px spacing, 16px margins each side
-        flow_w = 16 + cols * 96 + (cols - 1) * 8 + 16
-        flow_h = 16 + rows * 120 + (rows - 1) * 8 + 16
-        width = max(flow_w, 360)
-        # Fixed chrome: headerbar=47, profile row=68, sep=1, sep=1, bottom=56
-        height = 47 + 68 + 1 + flow_h + 1 + 56
-        self.set_size_request(width, height)
-        self.set_default_size(width, height)
+        # Do not force a window size here — allow the toolkit to size naturally
+        # The previous behavior computed a large `height` and called
+        # `set_size_request`/`set_default_size`, which caused the visible
+        # bottom padding to increase. Keeping sizing automatic keeps margins stable.
 
     def on_device_selected(self, device_name):
         self.stop_auto_refresh()

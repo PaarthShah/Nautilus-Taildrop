@@ -1,6 +1,6 @@
 # nautilus-taildrop
 
-A lightweight Tailscale Taildrop integration for GNOME's Nautilus file manager. Send files to any device on your Tailnet directly from the right-click context menu, and automatically receive incoming files with a desktop notification.
+A lightweight Tailscale Taildrop integration for GNOME's file manager. Send files to any device on your Tailnet from the file manager's Scripts menu, and automatically receive incoming files with a desktop notification.
 
 ## Preview
 ![Taildrop sender UI](screenshots/taildrop-light.png)
@@ -8,7 +8,7 @@ A lightweight Tailscale Taildrop integration for GNOME's Nautilus file manager. 
 
 ## Features
 
-- **Right-click → Share → Send via Taildrop** in Nautilus (and Nemo)
+- **Right-click → Scripts → Send via Taildrop** (available in Nautilus and other GTK file managers)
 - Native GTK4/libadwaita device picker UI
 - Background auto-receive daemon that saves files to `~/Downloads`
 - Desktop notification with an "Open" action when a file arrives
@@ -16,25 +16,24 @@ A lightweight Tailscale Taildrop integration for GNOME's Nautilus file manager. 
 
 ## Preview
 
-Right-clicking a file shows a **Share** submenu with **Send via Taildrop**. Clicking it opens a small window listing all online Tailnet peers. Select a device and the file is sent immediately.
+Right-clicking a file and choosing the file manager's Scripts menu entry **Send via Taildrop** opens a small window listing all online Tailnet peers. Select a device and the file is sent immediately.
 
 ## Requirements
 
 - Fedora / GNOME (also works on other distros with Nautilus or Nemo)
 - [Tailscale](https://tailscale.com/download) installed and logged in
-- `python3-gobject` (PyGObject) for the GTK4 UI and Nautilus extension
-- `nautilus-python` for the extension loader
+- `python3-gobject` (PyGObject) for the GTK4 UI
 
 ### Install dependencies on Fedora
 
 ```bash
-sudo dnf install python3-gobject nautilus-python
+sudo dnf install python3-gobject
 ```
 
 ### Install dependencies on Ubuntu/Debian
 
 ```bash
-sudo apt install python3-gi gir1.2-nautilus-4.0
+sudo apt install python3-gi gir1.2-gtk-4.0
 ```
 
 ## Installation
@@ -47,9 +46,8 @@ bash install.sh
 
 The installer will:
 1. Copy the scripts to `~/.local/bin` and `~/.local/share/nautilus/`
-2. Install the Nautilus extension to `~/.local/share/nautilus-python/extensions/`
-3. Enable and start the `taildrop-auto-receive` systemd user service
-4. Restart Nautilus to load the extension
+2. Enable and start the `taildrop-auto-receive` systemd user service
+3. Restart the file manager (or log out / back in) so the Scripts menu is refreshed
 
 ## Uninstallation
 
@@ -65,20 +63,19 @@ bash uninstall.sh
 | `uninstall.sh` | Removes all installed files and disables the service |
 | `taildrop-auto-receive.sh` | Daemon script — waits for incoming Taildrop files and sends a notification |
 | `taildrop-auto-receive.service` | systemd user unit that runs the daemon on login |
-| `nautilus-taildrop.py` | Nautilus/Nemo extension — adds the right-click menu entry |
 | `send-via-taildrop.py` | GTK4 UI — lists Tailnet peers and sends the selected files |
 
 ## How It Works
 
-**Sending:** The Nautilus extension registers a context menu item. When triggered, it launches `send-via-taildrop.py` with the selected file paths as arguments. The GTK4 window queries `tailscale status --peers` to list online devices. Selecting a device runs `tailscale file cp <file> <device>:` in a background thread.
+**Sending:** The installer places `send-via-taildrop.py` into the file manager's Scripts folder. Triggering the `Send via Taildrop` script launches `send-via-taildrop.py` with the selected file paths as arguments. The GTK4 window queries `tailscale status --json` to list online devices. Selecting a device runs `tailscale file cp <file> <device>:` in a background thread.
 
 **Receiving:** The systemd service runs `taildrop-auto-receive.sh` as a persistent daemon. It calls `tailscale file get --wait` in a loop, which blocks until a file arrives. On success it sends a desktop notification via `notify-send`. Clicking "Open" on the notification opens the file with the default application.
 
 ## Troubleshooting
 
-**The context menu doesn't appear**
+**The Scripts menu entry doesn't appear**
 
-Make sure `nautilus-python` is installed and Nautilus was restarted after installation:
+Log out and back in or restart your file manager to refresh the Scripts menu. In Nautilus or GNOME Files you can quit and restart it:
 ```bash
 nautilus -q
 ```

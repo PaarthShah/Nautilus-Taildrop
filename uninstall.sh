@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-echo "Uninstalling Nautilus Taildrop Integration..."
+echo "Uninstalling Taildrop integration..."
 
 # Stop and disable the systemd service
 systemctl --user stop taildrop-auto-receive.service 2>/dev/null || true
@@ -11,7 +11,7 @@ systemctl --user disable taildrop-auto-receive.service 2>/dev/null || true
 rm -f ~/.local/bin/taildrop-auto-receive.sh
 rm -f ~/.config/systemd/user/taildrop-auto-receive.service
 rm -f ~/.local/share/nautilus/scripts/"Send via Taildrop"
-rm -f ~/.local/share/nautilus-python/extensions/nautilus-taildrop.py
+rm -f ~/.local/share/nautilus-python/extensions/nautilus-taildrop.py 2>/dev/null || true
 
 systemctl --user daemon-reload
 

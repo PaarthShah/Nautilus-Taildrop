@@ -44,14 +44,6 @@ cd Nautilus-Taildrop
 bash install.sh
 ```
 
-### Screenshot demo mode
-
-If you want to capture a screenshot without connecting to a Tailscale tailnet, run:
-
-```bash
-TAILDROP_DEMO=1 python3 ./send-via-taildrop.py /path/to/file
-```
-
 ## 📂 Project Structure
 
 * `send-via-taildrop.py` — The standalone frameless GTK4 device selection window.

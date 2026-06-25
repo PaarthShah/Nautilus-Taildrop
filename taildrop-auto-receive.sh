@@ -2,7 +2,7 @@
 # Native blocking Taildrop auto-receive daemon using tailscale's --wait flag
 
 if ! command -v tailscale &> /dev/null; then
-    echo "Tailscale ist nicht installiert." >&2
+    echo "Tailscale is not installed." >&2
     exit 1
 fi
 
@@ -21,11 +21,11 @@ while true; do
             filepath="$DOWNLOADS_DIR"
             msg="Saved to Downloads folder."
         else
-            msg="Empfangen: $filename"
+            msg="Received: $filename"
         fi
 
-        ACTION=$(notify-send -a "Tailscale" -i "networkworkgroup-symbolic" \
-            --action="default=Öffnen" "Taildrop Received" "$msg")
+        ACTION=$(notify-send --app-name="" --icon=none \
+            --action="default=Open" "Taildrop Received" "$msg")
 
         if [ "$ACTION" = "default" ]; then
             xdg-open "$filepath" &

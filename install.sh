@@ -12,7 +12,7 @@ fi
 if ! python3 -c "import gi" &> /dev/null; then
     echo "Error: python3-gi (PyGObject) is not installed. The GTK sender UI requires PyGObject."
     echo "  Fedora/RHEL: sudo dnf install python3-gobject"
-    echo "  Ubuntu/Debian: sudo apt install python3-gi gir1.2-gtk-4.0"
+    echo "  Ubuntu/Debian: sudo apt install python3-gi gir1.2-gtk-4.0 gir1.2-adw-1"
     exit 1
 fi
 

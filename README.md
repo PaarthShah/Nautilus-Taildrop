@@ -17,7 +17,8 @@ A lightweight Tailscale Taildrop integration for GNOME's Nautilus file manager
 ## 💻 Requirements
 
 - Fedora / Ubuntu / Debian with Nautilus or Nemo
-- Active [Tailscale](https://tailscale.com) installation (logged in)
+- Active [Tailscale](https://tailscale.com) installation and logged in on this device
+- `tailscale` CLI available in `PATH`
 - Python 3 with GObject introspection bindings
 
 ### Install Dependencies
@@ -33,12 +34,22 @@ sudo dnf install python3-gobject
 sudo apt install python3-gi gir1.2-gtk-4.0 gir1.2-adw-1
 ```
 
+> The `tailscale` CLI must also be installed and authenticated separately. See https://tailscale.com/download for platform-specific instructions.
+
 ## 🔨 Installation & Setup
 
 ```bash
 git clone https://github.com/Balazsmi/Nautilus-Taildrop.git
 cd Nautilus-Taildrop
 bash install.sh
+```
+
+### Screenshot demo mode
+
+If you want to capture a screenshot without connecting to a Tailscale tailnet, run:
+
+```bash
+TAILDROP_DEMO=1 python3 ./send-via-taildrop.py /path/to/file
 ```
 
 ## 📂 Project Structure

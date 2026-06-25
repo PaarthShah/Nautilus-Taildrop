@@ -78,16 +78,26 @@ class DeviceButton(Gtk.Box):
         xc, yc, r = width / 2, height / 2, 40.0
         arc = math.pi * 0.75  # arc length ~270°
 
+        # Get accent color from theme
+        style = self.btn.get_style_context()
+        found, accent = style.lookup_color("accent_color")
+        if not found:
+            found, accent = style.lookup_color("theme_selected_bg_color")
+        if not found:
+            from gi.repository import Gdk
+            accent = Gdk.RGBA()
+            accent.red, accent.green, accent.blue, accent.alpha = 0.21, 0.52, 0.89, 1.0
+
         cr.set_line_width(3.0)
         cr.set_line_cap(1)  # ROUND
 
         # Faint full ring
-        cr.set_source_rgba(0.12, 0.53, 0.90, 0.18)
+        cr.set_source_rgba(accent.red, accent.green, accent.blue, 0.18)
         cr.arc(xc, yc, r, 0, 2 * math.pi)
         cr.stroke()
 
         # Spinning arc
-        cr.set_source_rgba(0.12, 0.53, 0.90, 1.0)
+        cr.set_source_rgba(accent.red, accent.green, accent.blue, 1.0)
         start = self._angle
         cr.arc(xc, yc, r, start, start + arc)
         cr.stroke()
@@ -116,7 +126,7 @@ class DeviceButton(Gtk.Box):
 
 class TaildropSenderWindow(Adw.ApplicationWindow):
     def __init__(self, app, files):
-        super().__init__(application=app, title="Send via Taildrop")
+        super().__init__(application=app, title="Taildrop")
         self.files = files
         self.set_resizable(False)
 
@@ -125,26 +135,18 @@ class TaildropSenderWindow(Adw.ApplicationWindow):
             .title-label {
                 font-size: 15pt;
                 font-weight: bold;
+                color: @window_fg_color;
             }
             .subtitle-label {
                 font-size: 10pt;
-                color: @placeholder_text_color;
-            }
-            .profile-icon-box {
-                background-color: @accent_bg_color;
-                color: @accent_fg_color;
-                border-radius: 20px;
-                min-width: 40px;
-                min-height: 40px;
             }
             .device-btn {
-                min-width: 76px;
+                min-width: 76px
                 min-height: 76px;
             }
             .device-btn image {
                 color: @accent_color;
             }
-
             .caption {
                 font-weight: 500;
                 font-size: 10pt;
@@ -159,9 +161,7 @@ class TaildropSenderWindow(Adw.ApplicationWindow):
 
         # HeaderBar
         header = Adw.HeaderBar()
-        header.set_title_widget(Gtk.Label(label=""))
-
-        root.append(header)
+        
 
         # Profile row — avatar + text on same line
         header_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
@@ -184,6 +184,7 @@ class TaildropSenderWindow(Adw.ApplicationWindow):
         title_label.set_xalign(0)
         self.subtitle_label = Gtk.Label(label="As …")
         self.subtitle_label.add_css_class("subtitle-label")
+        self.subtitle_label.add_css_class("dim-label")
         self.subtitle_label.set_xalign(0)
         text_box.append(title_label)
         text_box.append(self.subtitle_label)
@@ -224,6 +225,7 @@ class TaildropSenderWindow(Adw.ApplicationWindow):
 
         self.status_label = Gtk.Label(label="Searching for devices…")
         self.status_label.add_css_class("caption")
+        self.status_label.add_css_class("dim-label")
         self.status_label.set_hexpand(True)
         self.status_label.set_xalign(0)
         bottom_bar.append(self.status_label)

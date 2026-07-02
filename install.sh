@@ -16,28 +16,41 @@ if ! python3 -c "import gi" &> /dev/null; then
     exit 1
 fi
 
+# The right-click entry needs the nautilus-python loader; warn but don't fail.
+if ! python3 -c "import gi; gi.require_version('Nautilus', '4.1'); from gi.repository import Nautilus" &> /dev/null \
+   && ! python3 -c "import gi; gi.require_version('Nautilus', '4.0'); from gi.repository import Nautilus" &> /dev/null; then
+    echo "Warning: the nautilus-python extension bindings were not found."
+    echo "  The right-click 'Send via Taildrop' entry needs them:"
+    echo "  Fedora/RHEL: sudo dnf install nautilus-python"
+    echo "  Ubuntu/Debian: sudo apt install python3-nautilus"
+    echo "  Arch: sudo pacman -S nautilus-python"
+fi
+
 # Create required directories
 mkdir -p ~/.local/bin
 mkdir -p ~/.config/systemd/user
-mkdir -p ~/.local/share/nautilus/scripts
+mkdir -p ~/.local/share/nautilus-python/extensions
 
-# Copy and set permissions
+# Install the sender and auto-receive daemon
+cp send-via-taildrop.py ~/.local/bin/send-via-taildrop
+chmod +x ~/.local/bin/send-via-taildrop
+
 cp taildrop-auto-receive.sh ~/.local/bin/
 chmod +x ~/.local/bin/taildrop-auto-receive.sh
 
-cp taildrop-auto-receive.service ~/.config/systemd/user/
+# Install the file-manager context-menu extension (no Scripts submenu needed)
+cp nautilus-taildrop.py ~/.local/share/nautilus-python/extensions/nautilus-taildrop.py
 
-cp send-via-taildrop.py ~/.local/share/nautilus/scripts/"Send via Taildrop"
-chmod +x ~/.local/share/nautilus/scripts/"Send via Taildrop"
+cp taildrop-auto-receive.service ~/.config/systemd/user/
 
 # Enable and start the systemd user service
 systemctl --user daemon-reload
 systemctl --user enable --now taildrop-auto-receive.service
 
-# Restart Nautilus so the Scripts menu is available from the file manager
+# Restart Nautilus so the extension is loaded
 nautilus -q 2>/dev/null || true
 
 echo ""
 echo "Installation complete!"
-echo "The 'Scripts → Send via Taildrop' entry is now available in the file manager's Scripts menu."
+echo "Right-click a file and choose 'Send via Taildrop'."
 echo "Files sent to this device will appear in ~/Downloads with a desktop notification."

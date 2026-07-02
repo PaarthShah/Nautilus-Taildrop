@@ -1,0 +1,58 @@
+[project]
+name = "nautilus-taildrop"
+version = "0.1.0"
+description = "Lightweight Tailscale Taildrop integration for GNOME's Nautilus file manager"
+readme = "README.md"
+requires-python = ">=3.11"
+
+# Runtime stack (GTK4, libadwaita, tailscale, typelibs) comes from the distro; see README.
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/PaarthShah/Nautilus-Taildrop"
+Repository = "https://github.com/PaarthShah/Nautilus-Taildrop"
+
+[dependency-groups]
+dev = [
+    "ruff",
+    "pytest",
+    # pygobject/pycairo let the tests import the GTK module; they build against the
+    # system GI/cairo dev files (Arch: glib2 cairo pkgconf base-devel).
+    "pygobject",
+    "pycairo",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+# PyGObject emits this from its own overrides on import; not actionable here.
+filterwarnings = ["ignore:GLib.unix_signal_add_full is deprecated"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "W",    # pycodestyle warnings
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "UP",   # pyupgrade
+    "SIM",  # flake8-simplify
+    "C4",   # flake8-comprehensions
+    "RUF",  # ruff-specific
+    "PL",   # pylint
+    "PTH",  # flake8-use-pathlib
+    "A",    # flake8-builtins
+    "ARG",  # flake8-unused-arguments
+    "TRY",  # tryceratops
+    "S",    # flake8-bandit (security)
+]
+
+[tool.ruff.lint.pylint]
+# UI construction is inherently long/branchy; keep the ceilings pragmatic.
+max-branches = 20
+max-statements = 80

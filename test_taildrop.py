@@ -1,13 +1,17 @@
+import importlib
 import os
 import sys
 import unittest
-import importlib
+from pathlib import Path
 
 # Add current folder to path
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 # Import using importlib because of hyphens in filename
 send_via_taildrop = importlib.import_module("send-via-taildrop")
+
+_HAS_DISPLAY = bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
+
 
 class TestTaildrop(unittest.TestCase):
     def test_device_icons(self):
@@ -15,8 +19,9 @@ class TestTaildrop(unittest.TestCase):
         self.assertEqual(send_via_taildrop.DEVICE_ICONS["linux"], "computer-symbolic")
         self.assertEqual(send_via_taildrop.DEVICE_ICONS["macos"], "laptop-symbolic")
 
+    @unittest.skipUnless(_HAS_DISPLAY, "GTK widget construction requires a display")
     def test_device_button_properties(self):
-        btn = send_via_taildrop.DeviceButton("MyDevice", "linux", lambda x: None)
+        btn = send_via_taildrop.DeviceButton("MyDevice", "linux", lambda _name: None)
         self.assertEqual(btn.name, "MyDevice")
         self.assertIsNotNone(btn.btn)
 

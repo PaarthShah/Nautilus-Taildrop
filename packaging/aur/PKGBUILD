@@ -1,0 +1,48 @@
+# Maintainer: Paarth Shah <aur@paarth.example>
+pkgname=nautilus-taildrop-git
+_pkgname=nautilus-taildrop
+pkgver=r0.0
+pkgrel=1
+pkgdesc="Tailscale Taildrop integration for GNOME's Nautilus file manager"
+arch=('any')
+url="https://github.com/PaarthShah/Nautilus-Taildrop"
+# Upstream ships no LICENSE file; update this once a license is added upstream.
+license=('unknown')
+depends=('tailscale' 'python' 'python-gobject' 'gtk4' 'libadwaita' 'libnotify'
+         'xdg-utils' 'nautilus-python')
+optdepends=('nemo-python: right-click integration for the Nemo file manager')
+makedepends=('git')
+provides=("$_pkgname")
+conflicts=("$_pkgname")
+source=("$_pkgname::git+https://github.com/PaarthShah/Nautilus-Taildrop.git")
+sha256sums=('SKIP')
+install="$_pkgname.install"
+
+pkgver() {
+    cd "$srcdir/$_pkgname"
+    printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+package() {
+    cd "$srcdir/$_pkgname"
+
+    install -Dm755 send-via-taildrop.py "$pkgdir/usr/bin/send-via-taildrop"
+    install -Dm755 taildrop-auto-receive.sh "$pkgdir/usr/bin/taildrop-auto-receive.sh"
+
+    # nautilus-python loads this system-wide
+    install -Dm644 nautilus-taildrop.py \
+        "$pkgdir/usr/share/nautilus-python/extensions/nautilus-taildrop.py"
+
+    # systemd user unit, ExecStart repointed at the packaged binary
+    install -Dm644 taildrop-auto-receive.service \
+        "$pkgdir/usr/lib/systemd/user/taildrop-auto-receive.service"
+    sed -i 's|^ExecStart=.*|ExecStart=/usr/bin/taildrop-auto-receive.sh|' \
+        "$pkgdir/usr/lib/systemd/user/taildrop-auto-receive.service"
+
+    # enable the user service by default via a wants-symlink
+    install -d "$pkgdir/usr/lib/systemd/user/default.target.wants"
+    ln -s ../taildrop-auto-receive.service \
+        "$pkgdir/usr/lib/systemd/user/default.target.wants/taildrop-auto-receive.service"
+
+    install -Dm644 README.md "$pkgdir/usr/share/doc/$_pkgname/README.md"
+}

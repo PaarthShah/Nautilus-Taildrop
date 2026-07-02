@@ -1,0 +1,34 @@
+post_install() {
+    cat <<'EOF'
+==> Nautilus-Taildrop installed.
+
+  * The right-click "Send via Taildrop" entry is provided by a system-wide
+    nautilus-python extension — restart your file manager to load it:
+
+      nautilus -q      # (or: nemo -q)
+
+  * The auto-receive daemon is enabled by default for all users; start it now
+    (it also starts automatically on your next login):
+
+      systemctl --user start taildrop-auto-receive.service
+
+  The tailscale CLI must be installed and authenticated separately:
+  https://tailscale.com/download
+EOF
+}
+
+post_upgrade() {
+    cat <<'EOF'
+==> Nautilus-Taildrop upgraded. Restart your file manager (nautilus -q) and, if
+    needed, restart the daemon: systemctl --user restart taildrop-auto-receive.service
+EOF
+}
+
+post_remove() {
+    cat <<'EOF'
+==> Nautilus-Taildrop removed. If the auto-receive daemon is still running in
+    this session, stop it with:
+
+      systemctl --user stop taildrop-auto-receive.service
+EOF
+}

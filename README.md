@@ -39,10 +39,35 @@ sudo apt install python3-gi gir1.2-gtk-4.0 gir1.2-adw-1
 ## 🔨 Installation & Setup
 
 ```bash
-git clone https://github.com/Balazsmi/Nautilus-Taildrop.git
+git clone https://github.com/PaarthShah/Nautilus-Taildrop.git
 cd Nautilus-Taildrop
 bash install.sh
 ```
+
+### Arch Linux (AUR)
+
+Once published, install with an AUR helper such as [`yay`](https://github.com/Jguer/yay):
+
+```bash
+yay -S nautilus-taildrop-git
+```
+
+Or build and install the packaged PKGBUILD directly from a clone:
+
+```bash
+cd packaging/aur
+makepkg -si
+```
+
+The package installs the sender and daemon system-wide and ships the systemd
+**user** unit. Nautilus scripts and the user service are per-user, so after
+installation follow the post-install message to link the sender into
+`~/.local/share/nautilus/scripts` and run
+`systemctl --user enable --now taildrop-auto-receive.service`.
+
+> Publishing to the AUR requires the maintainer's SSH key:
+> `git clone ssh://aur@aur.archlinux.org/nautilus-taildrop-git.git`, copy in
+> `PKGBUILD` and `.SRCINFO` from `packaging/aur/`, then commit and push.
 
 ## 🧑‍💻 Development
 

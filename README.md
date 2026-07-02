@@ -49,3 +49,9 @@ bash install.sh
 * `send-via-taildrop.py` — The standalone frameless GTK4 device selection window.
 * `taildrop-auto-receive.sh` — The background loop utilizing `tailscale file get --wait`.
 * `taildrop-auto-receive.service` — Systemd user service managing the auto-receive lifecycle.
+
+## License
+
+Copyright (C) 2026 Balazs Miskey
+
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.

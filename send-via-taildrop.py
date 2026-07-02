@@ -26,8 +26,8 @@ DEVICE_ICONS = {
     "linux":   "computer-symbolic",
     "android": "phone-symbolic",
     "ios":     "phone-symbolic",
-    "darwin":  "laptop-symbolic",
-    "macos":   "laptop-symbolic",
+    "darwin":  "computer-symbolic",
+    "macos":   "computer-symbolic",
 }
 
 MIN_WINDOW_WIDTH = 360
@@ -238,7 +238,7 @@ class TaildropSenderWindow(Adw.ApplicationWindow):
         # Device grid wraps to the available width.
         self.flow = Gtk.FlowBox()
         self.flow.set_valign(Gtk.Align.START)
-        self.flow.set_halign(Gtk.Align.CENTER)
+        self.flow.set_halign(Gtk.Align.START)
         self.flow.set_min_children_per_line(3)
         self.flow.set_selection_mode(Gtk.SelectionMode.NONE)
         self.flow.set_row_spacing(8)

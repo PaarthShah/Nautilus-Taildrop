@@ -51,27 +51,32 @@ cd Nautilus-Taildrop
 bash install.sh
 ```
 
-### Arch Linux (AUR)
+### Arch Linux
 
-Once published, install with an AUR helper such as [`yay`](https://github.com/Jguer/yay):
+Install straight from this repository with [`yay`](https://github.com/Jguer/yay) —
+clone it and point `yay -B` at the bundled PKGBUILD directory (`yay -B` builds and
+installs a local PKGBUILD; the PKGBUILD fetches the sources from this GitHub repo):
 
 ```bash
-yay -S nautilus-taildrop-git
+git clone https://github.com/PaarthShah/Nautilus-Taildrop.git
+yay -B Nautilus-Taildrop/packaging/aur
 ```
 
-Or build and install the packaged PKGBUILD directly from a clone:
+Or without an AUR helper, using `makepkg` directly:
 
 ```bash
-cd packaging/aur
+cd Nautilus-Taildrop/packaging/aur
 makepkg -si
 ```
 
-The package installs everything system-wide and requires **no per-user setup**:
-the right-click entry comes from a `nautilus-python` extension in
-`/usr/share/nautilus-python/extensions/`, and the auto-receive **user** service is
-enabled by default via a `default.target.wants` symlink. After installing, restart
-your file manager (`nautilus -q`) to load the extension; the daemon starts on your
-next login (or run `systemctl --user start taildrop-auto-receive.service` now).
+Once published to the AUR you'll also be able to `yay -S nautilus-taildrop-git`.
+
+The package installs everything system-wide: the right-click entry comes from a
+`nautilus-python` extension in `/usr/share/nautilus-python/extensions/`, and the
+auto-receive **user** service is enabled via a `default.target.wants` symlink.
+After installing, restart your file manager (`nautilus -q`) to load the extension;
+the daemon starts on your next login (or run
+`systemctl --user start taildrop-auto-receive.service` now).
 
 > Publishing to the AUR requires the maintainer's SSH key:
 > `git clone ssh://aur@aur.archlinux.org/nautilus-taildrop-git.git`, copy in

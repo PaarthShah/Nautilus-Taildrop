@@ -84,22 +84,23 @@ the daemon starts on your next login (or run
 
 ## 🧑‍💻 Development
 
-The project uses [uv](https://docs.astral.sh/uv/) to manage dev tooling (ruff and
-pytest). Runtime dependencies (PyGObject, GTK4, libadwaita, the `tailscale` CLI)
-are **system** packages — they provide GObject-introspection typelibs and native
-binaries and are not pip/uv-installable, so `pyproject.toml` intentionally leaves
-`dependencies` empty. Install them via your distro (see above).
+The project uses [uv](https://docs.astral.sh/uv/) to manage dev tooling.
 
 ```bash
-uv sync              # create the dev venv (ruff + pytest)
+uv sync              # create the dev venv (ruff, pytest, PyGObject)
 uv run ruff check .  # lint
 uv run pytest        # run tests
 ```
 
-> The tests import the GTK sender and therefore need system PyGObject **and** an
-> active display. In uv's isolated venv (or headless) they are skipped
-> automatically via `conftest.py`; run them against the system Python
-> (`python3 -m pytest`) in a graphical session to exercise them.
+`uv sync` builds PyGObject from source so the test suite can import the GTK module,
+which needs the GObject-introspection and cairo development files plus a C compiler
+(Arch: `sudo pacman -S glib2 cairo pkgconf base-devel`). The GTK/Adw typelibs are
+still loaded from the system at runtime. The one widget-construction test
+additionally needs a display and is skipped automatically when headless.
+
+> The **application's** runtime stack (GTK4, libadwaita, the `tailscale` CLI, the
+> typelibs) always comes from your distro, which is why `[project].dependencies` is
+> empty — see the requirements above.
 
 ## 📂 Project Structure
 

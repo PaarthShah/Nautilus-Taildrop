@@ -1,12 +1,11 @@
 """Pytest configuration.
 
-``test_taildrop.py`` imports the GTK4 sender module, which requires PyGObject with
-GObject-introspection typelibs (a *system* dependency) and, for widget
-construction, an active display. When either is unavailable — e.g. `uv run pytest`
-in a headless venv without system site packages — skip collecting that module
-rather than failing, so the dev workflow degrades gracefully.
+``test_taildrop.py`` imports the GTK4 sender module, which needs PyGObject and the
+GTK/Adw/Pango typelibs. PyGObject ships in the dev dependency group, so it is
+normally importable under ``uv run pytest``; if it is somehow unavailable we skip
+collecting the module rather than erroring. (Widget *construction* additionally
+needs a display — that finer-grained skip lives in the test itself.)
 """
-import os
 
 
 def _gi_stack_available() -> bool:
@@ -22,10 +21,6 @@ def _gi_stack_available() -> bool:
     return True
 
 
-def _has_display() -> bool:
-    return bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
-
-
 collect_ignore = []
-if not (_gi_stack_available() and _has_display()):
+if not _gi_stack_available():
     collect_ignore.append("test_taildrop.py")

@@ -5,10 +5,10 @@ description = "Lightweight Tailscale Taildrop integration for GNOME's Nautilus f
 readme = "README.md"
 requires-python = ">=3.11"
 
-# NOTE: the runtime dependencies (PyGObject, GTK4, libadwaita, the tailscale CLI,
-# libnotify, xdg-utils) are *system* packages that provide GObject-introspection
-# typelibs and native binaries. They are not reliably pip/uv-installable, so they
-# are intentionally NOT listed here — install them via your distro (see README).
+# NOTE: end users get the runtime stack (GTK4, libadwaita, the tailscale CLI,
+# libnotify, xdg-utils, and the GObject-introspection typelibs) from their distro,
+# so nothing is listed here — see the README. PyGObject itself is pip-buildable and
+# lives in the dev group below purely so the test suite can import the GTK module.
 dependencies = []
 
 [project.urls]
@@ -19,6 +19,11 @@ Repository = "https://github.com/PaarthShah/Nautilus-Taildrop"
 dev = [
     "ruff",
     "pytest",
+    # Building PyGObject/pycairo from source needs the GObject-introspection and
+    # cairo development files plus a C compiler (e.g. Arch: `glib2 cairo pkgconf
+    # base-devel`). The GTK/Adw typelibs are still loaded from the system at runtime.
+    "pygobject",
+    "pycairo",
 ]
 
 [tool.uv]

@@ -9,29 +9,36 @@ A lightweight Tailscale Taildrop integration for GNOME's Nautilus file manager
 
 ## 📋 Features
 
-- **Nautilus Integration:** Right-click a file $\rightarrow$ `Scripts` $\rightarrow$ `Send via Taildrop`.
+- **Nautilus Integration:** Right-click a file $\rightarrow$ `Send via Taildrop` (a native `nautilus-python` context-menu extension — no per-user setup).
 - **Modern UI:** Borderless GTK4/Libadwaita device picker matching GNOME's design language and dynamic accent color.
 - **Auto-Receive Daemon:** Background systemd user service that automatically saves incoming files to `~/Downloads`.
 - **Desktop Notifications:** Native alerts with an immediate "Open" action upon receiving a file.
 
 ## 💻 Requirements
 
-- Fedora / Ubuntu / Debian with Nautilus or Nemo
+- Fedora / Ubuntu / Debian / Arch with Nautilus or Nemo
 - Active [Tailscale](https://tailscale.com) installation and logged in on this device
 - `tailscale` CLI available in `PATH`
 - Python 3 with GObject introspection bindings
+- `nautilus-python` (the Python extension loader) for the right-click menu entry
 
 ### Install Dependencies
 
 **Fedora:**
 ```bash
-sudo dnf install python3-gobject
+sudo dnf install python3-gobject nautilus-python
 ```
 
 **Ubuntu / Debian:**
 
 ```bash
-sudo apt install python3-gi gir1.2-gtk-4.0 gir1.2-adw-1
+sudo apt install python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 python3-nautilus
+```
+
+**Arch:**
+
+```bash
+sudo pacman -S python-gobject nautilus-python
 ```
 
 > The `tailscale` CLI must also be installed and authenticated separately. See https://tailscale.com/download for platform-specific instructions.
@@ -59,11 +66,12 @@ cd packaging/aur
 makepkg -si
 ```
 
-The package installs the sender and daemon system-wide and ships the systemd
-**user** unit. Nautilus scripts and the user service are per-user, so after
-installation follow the post-install message to link the sender into
-`~/.local/share/nautilus/scripts` and run
-`systemctl --user enable --now taildrop-auto-receive.service`.
+The package installs everything system-wide and requires **no per-user setup**:
+the right-click entry comes from a `nautilus-python` extension in
+`/usr/share/nautilus-python/extensions/`, and the auto-receive **user** service is
+enabled by default via a `default.target.wants` symlink. After installing, restart
+your file manager (`nautilus -q`) to load the extension; the daemon starts on your
+next login (or run `systemctl --user start taildrop-auto-receive.service` now).
 
 > Publishing to the AUR requires the maintainer's SSH key:
 > `git clone ssh://aur@aur.archlinux.org/nautilus-taildrop-git.git`, copy in
@@ -90,7 +98,8 @@ uv run pytest        # run tests
 
 ## 📂 Project Structure
 
-* `send-via-taildrop.py` — The standalone frameless GTK4 device selection window.
+* `send-via-taildrop.py` — The standalone GTK4/Libadwaita device selection window.
+* `nautilus-taildrop.py` — The Nautilus/Nemo context-menu extension (via `nautilus-python`).
 * `taildrop-auto-receive.sh` — The background loop utilizing `tailscale file get --wait`.
 * `taildrop-auto-receive.service` — Systemd user service managing the auto-receive lifecycle.
 * `pyproject.toml` — Project metadata, uv dev dependency group, and ruff lint config.

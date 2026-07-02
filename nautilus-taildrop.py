@@ -39,6 +39,7 @@ def _find_sender():
     """Return the path to the send-via-taildrop launcher, or None if unavailable."""
     candidates = [
         Path("/usr/bin/send-via-taildrop"),
+        Path.home() / ".local/bin/send-via-taildrop",
         Path.home() / ".local/share/nautilus/scripts/Send via Taildrop",
     ]
     for path in candidates:

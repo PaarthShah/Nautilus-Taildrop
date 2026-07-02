@@ -2,18 +2,15 @@ post_install() {
     cat <<'EOF'
 ==> Nautilus-Taildrop installed.
 
-  The following steps are per-user and cannot be done by a system package:
+  * The right-click "Send via Taildrop" entry is provided by a system-wide
+    nautilus-python extension — restart your file manager to load it:
 
-  1) Enable the right-click "Send via Taildrop" entry by linking the sender into
-     your Nautilus scripts directory:
+      nautilus -q      # (or: nemo -q)
 
-       mkdir -p ~/.local/share/nautilus/scripts
-       ln -sf /usr/bin/send-via-taildrop \
-           "$HOME/.local/share/nautilus/scripts/Send via Taildrop"
+  * The auto-receive daemon is enabled by default for all users; start it now
+    (it also starts automatically on your next login):
 
-  2) Enable the auto-receive daemon (saves incoming files to ~/Downloads):
-
-       systemctl --user enable --now taildrop-auto-receive.service
+      systemctl --user start taildrop-auto-receive.service
 
   The tailscale CLI must be installed and authenticated separately:
   https://tailscale.com/download
@@ -21,14 +18,17 @@ EOF
 }
 
 post_upgrade() {
-    post_install
+    cat <<'EOF'
+==> Nautilus-Taildrop upgraded. Restart your file manager (nautilus -q) and, if
+    needed, restart the daemon: systemctl --user restart taildrop-auto-receive.service
+EOF
 }
 
 post_remove() {
     cat <<'EOF'
-==> If you set up the per-user integration, remove it manually:
+==> Nautilus-Taildrop removed. If the auto-receive daemon is still running in
+    this session, stop it with:
 
-      rm -f "$HOME/.local/share/nautilus/scripts/Send via Taildrop"
-      systemctl --user disable --now taildrop-auto-receive.service
+      systemctl --user stop taildrop-auto-receive.service
 EOF
 }

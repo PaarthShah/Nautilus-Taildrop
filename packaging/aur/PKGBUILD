@@ -8,9 +8,9 @@ arch=('any')
 url="https://github.com/PaarthShah/Nautilus-Taildrop"
 # Upstream ships no LICENSE file; update this once a license is added upstream.
 license=('unknown')
-depends=('tailscale' 'python' 'python-gobject' 'gtk4' 'libadwaita' 'libnotify' 'xdg-utils')
-optdepends=('nautilus: right-click "Send via Taildrop" integration'
-            'nemo: alternative file manager integration')
+depends=('tailscale' 'python' 'python-gobject' 'gtk4' 'libadwaita' 'libnotify'
+         'xdg-utils' 'nautilus-python')
+optdepends=('nemo-python: right-click integration for the Nemo file manager')
 makedepends=('git')
 provides=("$_pkgname")
 conflicts=("$_pkgname")
@@ -32,12 +32,23 @@ package() {
     # Auto-receive daemon → /usr/bin
     install -Dm755 taildrop-auto-receive.sh "$pkgdir/usr/bin/taildrop-auto-receive.sh"
 
+    # Nautilus/Nemo context-menu extension → loaded system-wide by nautilus-python,
+    # so the "Send via Taildrop" entry needs no per-user setup.
+    install -Dm644 nautilus-taildrop.py \
+        "$pkgdir/usr/share/nautilus-python/extensions/nautilus-taildrop.py"
+
     # Systemd *user* unit, with ExecStart repointed at the packaged binary
     # (upstream's unit references ~/.local/bin for the manual install.sh flow).
     install -Dm644 taildrop-auto-receive.service \
         "$pkgdir/usr/lib/systemd/user/taildrop-auto-receive.service"
     sed -i 's|^ExecStart=.*|ExecStart=/usr/bin/taildrop-auto-receive.sh|' \
         "$pkgdir/usr/lib/systemd/user/taildrop-auto-receive.service"
+
+    # Enable the user service by default for every user (no manual
+    # `systemctl --user enable` needed) via a wants-symlink.
+    install -d "$pkgdir/usr/lib/systemd/user/default.target.wants"
+    ln -s ../taildrop-auto-receive.service \
+        "$pkgdir/usr/lib/systemd/user/default.target.wants/taildrop-auto-receive.service"
 
     install -Dm644 README.md "$pkgdir/usr/share/doc/$_pkgname/README.md"
 }
